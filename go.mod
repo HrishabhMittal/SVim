@@ -1,4 +1,4 @@
-module ted
+module svim
 
 go 1.23.3
 
