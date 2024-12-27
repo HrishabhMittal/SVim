@@ -1,20 +1,11 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
-	"golang.org/x/term"
+    "fmt"
+    "os"
+    "golang.org/x/term"
 )
-
-const ARROW_UP = 65
-const ARROW_DOWN = 66
-const ARROW_RIGHT = 67
-const ARROW_LEFT = 68
 var LASTCHAR byte
-func moveTo(i int,j int) {
-    fmt.Printf("\033[%d;%dH",i+1,j+1)
-}
 func getKey() (char byte,code byte) {
     fd:=int(os.Stdin.Fd())
     old,err := term.MakeRaw(fd)
@@ -126,17 +117,22 @@ func Print(b [][]byte,cur []int,offset []int) {
     if err!=nil {
         panic(err)
     }
-    fmt.Print("\033[H\033[J")
+    fmt.Print(INVIS_CURSOR,HOME)
     for i:=offset[0];i<len(b)&&i<offset[0]+h;i++ {
         if offset[1]>=len(b[i]) {
-            fmt.Printf("\n")
+            fmt.Printf("%*s",w,"")
         } else if offset[1]+w>len(b[i]) {
-            fmt.Printf("%s\n",b[i][offset[1]:])
+            fmt.Printf("%s",b[i][offset[1]:])
+            fmt.Printf("%*s",w-len(b[i])+offset[1],"")
         } else {
-            fmt.Printf("%s\n",b[i][offset[1]:offset[1]+w])
+            fmt.Printf("%s",b[i][offset[1]:offset[1]+w])
+        }
+        if i!=len(b)-1&&i!=offset[0]+h-1 {
+            fmt.Printf("\n")
         }
     }
     moveTo(cur[0]-offset[0],cur[1]-offset[1])
+    fmt.Print(VIS_CURSOR)
 }
 func WriteFile(filename string,data [][]byte) {
     file, err := os.Create(filename)
@@ -161,6 +157,8 @@ func ReadFile(fileName string) (data [][]byte) {
         if i=='\n' {
             data=append(data,[]byte{})
             len++
+        } else if i==9 {
+            data[len]=append(data[len],' ',' ',' ',' ')
         } else {
             data[len]=append(data[len],i)
         }
@@ -174,6 +172,7 @@ func main() {
         return
     }
     d:=ReadFile(args[1])
+    fmt.Print(OPEN_ALT_BUFFER,HOME,CLEAR)
     cur:=[]int{0,0}
     offset:=[]int{0,0}
     editing:=true
@@ -182,7 +181,5 @@ func main() {
         d,cur,offset,editing=editFile(d,cur,offset,editing)
     }
     WriteFile(args[1],d)
-    fmt.Print("\033[H\033[J")
+    fmt.Print(CLOSE_ALT_BUFFER)
 }
-
-
