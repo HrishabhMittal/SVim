@@ -1,5 +1,4 @@
 package main
-
 import (
     "fmt"
     "os"
@@ -89,6 +88,7 @@ func editFile(data [][]byte,curpos []int,offset []int,b bool) ([][]byte,[]int,[]
             data[curpos[0]]=append(data[curpos[0]][:curpos[1]-1],data[curpos[0]][curpos[1]:]...)
             curpos[1]--
         }
+        savepos=curpos[1]
     } else if char==13 {
         x:=make([][]byte,curpos[0])
         copy(x,data[:curpos[0]])
@@ -96,18 +96,21 @@ func editFile(data [][]byte,curpos []int,offset []int,b bool) ([][]byte,[]int,[]
         data=append(x,data[curpos[0]+1:]...)
         curpos[0]++
         curpos[1]=0
+        savepos=curpos[1]
     } else if char==9 {
         line:=make([]byte,curpos[1])
         copy(line,data[curpos[0]][:curpos[1]])
         line=append(line,' ',' ',' ',' ');
         data[curpos[0]] = append(line, data[curpos[0]][curpos[1]:]...)
         curpos[1]+=4
+        savepos=curpos[1]
     } else {
         line:=make([]byte,curpos[1])
         copy(line,data[curpos[0]][:curpos[1]])
         line=append(line, char);
         data[curpos[0]] = append(line, data[curpos[0]][curpos[1]:]...)
         curpos[1]++
+        savepos=curpos[1]
     }
     return data,curpos,offset,b
 }
@@ -131,6 +134,7 @@ func Print(b [][]byte,cur []int,offset []int) {
             fmt.Printf("\n")
         }
     }
+    fmt.Print("\033[J")
     moveTo(cur[0]-offset[0],cur[1]-offset[1])
     fmt.Print(VIS_CURSOR)
 }
@@ -146,13 +150,16 @@ func WriteFile(filename string,data [][]byte) {
         }
     }
 }
-func ReadFile(fileName string) (data [][]byte) {
+func LoadFile(fileName string) (data [][]byte) {
     d, err := os.ReadFile(fileName)
-    if err!=nil {
-        panic(err)
-    }
     len:=0
     data=[][]byte{{}}
+    if err!=nil {
+        if os.IsNotExist(err) {
+            return
+        }
+        panic(err)
+    }
     for _,i := range d {
         if i=='\n' {
             data=append(data,[]byte{})
@@ -171,7 +178,7 @@ func main() {
     if len(args)!=2 {
         return
     }
-    d:=ReadFile(args[1])
+    d:=LoadFile(args[1])
     fmt.Print(OPEN_ALT_BUFFER,HOME,CLEAR)
     cur:=[]int{0,0}
     offset:=[]int{0,0}
