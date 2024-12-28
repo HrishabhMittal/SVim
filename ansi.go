@@ -19,6 +19,14 @@ const BLINKING_UNDERLINE_CURSOR = "\033[3 q"
 const STEADY_UNDERLINE_CURSOR = "\033[4 q"
 const BLINKING_THIN_CURSOR = "\033[5 q"
 const STEADY_THIN_CURSOR = "\033[6 q"
+const RESET_COLOR = "\033[0m"
+func SetFGColor(num int) {
+    fmt.Printf("\033[38;5;%dm",num)
+}
+
+func SetBGColor(num int) {
+    fmt.Printf("\033[48;5;%dm",num)
+}
 func moveTo(i int,j int) {
     fmt.Printf("\033[%d;%dH",i+1,j+1)
 }
